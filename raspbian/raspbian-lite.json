@@ -34,6 +34,14 @@
         "inline": [
           "wpa_passphrase \"{{user `wifi_name`}}\" \"{{user `wifi_password`}}\" | sed -e 's/#.*$//' -e '/^$/d' >> /etc/wpa_supplicant/wpa_supplicant.conf"
           ]
+      },
+      {
+        "type": "shell",
+        "inline": [
+          "sed '/PasswordAuthentication/d' -i /etc/ssh/sshd_config",
+          "echo >> /etc/ssh/sshd_config",
+          "echo 'PasswordAuthentication no' >> /etc/ssh/sshd_config"
+        ]
       }
     ]
   }
