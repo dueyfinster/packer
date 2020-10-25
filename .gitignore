@@ -8,3 +8,6 @@ crash.log
 # For built boxes
 **/output/
 *.box
+*.img
+*.zip
+secrets.json
