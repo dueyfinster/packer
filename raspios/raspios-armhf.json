@@ -1,38 +1,31 @@
 {
-    "variables": {
-      "wifi_name": "",
-      "wifi_password": "",
-      "ssh_key_src": "{{env `HOME`}}/.ssh/id_personal.pub",
-      "image_home_dir": "/home/pi",
-      "home": "{{env `HOME`}}"
-    },
     "builders": [{
       "type": "arm",
       "file_urls" : ["http://downloads.raspberrypi.org/raspios_lite_armhf/images/raspios_lite_armhf-2020-08-24/2020-08-20-raspios-buster-armhf-lite.zip"],
       "file_checksum_url": "http://downloads.raspberrypi.org/raspios_lite_armhf/images/raspios_lite_armhf-2020-08-24/2020-08-20-raspios-buster-armhf-lite.zip.sha256",
       "file_checksum_type": "sha256",
       "file_target_extension": "zip",
-      "image_build_method": "reuse",
+      "image_build_method": "resize",
       "image_path": "raspios-armhf.img",
-      "image_size": "2G",
+      "image_size": "3G",
       "image_type": "dos",
       "image_partitions": [
-      {
-        "name": "boot",
-        "type": "c",
-        "start_sector": "8192",
-        "filesystem": "vfat",
-        "size": "256M",
-        "mountpoint": "/boot"
-      },
-      {
-        "name": "root",
-        "type": "83",
-        "start_sector": "532480",
-        "filesystem": "ext4",
-        "size": "0",
-        "mountpoint": "/"
-      }
+        {
+          "name": "boot",
+          "type": "c",
+          "start_sector": "8192",
+          "filesystem": "vfat",
+          "size": "256M",
+          "mountpoint": "/boot"
+        },
+        {
+          "name": "root",
+          "type": "83",
+          "start_sector": "532480",
+          "filesystem": "ext4",
+          "size": "0",
+          "mountpoint": "/"
+        }
       ],
       "image_chroot_env": ["PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin"],
       "qemu_binary_source_path": "/usr/bin/qemu-arm-static",
@@ -42,30 +35,16 @@
       {
         "type": "shell",
         "inline": [
-          "mkdir {{user `image_home_dir`}}/.ssh"
+          "apt install -y python3-pip",
+          "pip3 install ansible==2.10.1"
         ]
       },
       {
-        "type": "file",
-        "source": "{{user `ssh_key_src`}}",
-        "destination": "{{user `image_home_dir`}}/.ssh/authorized_keys"
-      },
-      {
-        "type": "shell",
-        "inline": ["touch /boot/ssh && chown pi:pi -R  {{user `image_home_dir`}}/.ssh"]
-      },
-      {
-        "type": "shell",
-        "inline": [
-          "wpa_passphrase \"{{user `wifi_name`}}\" \"{{user `wifi_password`}}\" | sed -e 's/#.*$//' -e '/^$/d' >> /etc/wpa_supplicant/wpa_supplicant.conf"
-          ]
-      },
-      {
-        "type": "shell",
-        "inline": [
-          "sed '/PasswordAuthentication/d' -i /etc/ssh/sshd_config",
-          "echo >> /etc/ssh/sshd_config",
-          "echo 'PasswordAuthentication no' >> /etc/ssh/sshd_config"
+        "type": "ansible-local",
+        "playbook_dir": "./raspios/ansible",
+        "extra_arguments": ["--vault-password-file", ".vault_pass.txt"],
+        "playbook_files": [
+          "./raspios/ansible/pi.yml"
         ]
       }
     ]

@@ -1,0 +1,44 @@
+---
+- name: Provision a User, enable SSH and Wifi
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Add User with Sudo Access
+      user:
+        name: "{{ user_name }}"
+        shell: /bin/bash
+        password: "{{ user_pass }}"
+        state: present
+        groups: sudo
+    - name: Deploy User SSH Public Key
+      authorized_key: 
+        user: "{{ user_name }}"
+        key: "{{ user_ssh_pubkey }}"
+        state: present
+    - name: Enable ssh
+      service:
+        name: ssh
+        enabled: true
+    - name: Disable SSH password authentication
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: ^PasswordAuthentication
+        line: PasswordAuthentication no
+    - name: Enable SSH public key authentication
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: ^PubkeyAuthentication
+        line: PubkeyAuthentication yes
+    - name: Disable SSH Root Login
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: ^PermitRootLogin
+        line: PermitRootLogin no
+    - name: WPA Supplicant Config Install
+      template:
+        src: "wpa_supplicant.conf"
+        dest: "/boot/wpa_supplicant.conf"
+        owner: root
+        group: root
+        mode: 0600

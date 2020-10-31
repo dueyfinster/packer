@@ -11,3 +11,5 @@ crash.log
 *.img
 *.zip
 secrets.json
+*.txt
+all.yml
